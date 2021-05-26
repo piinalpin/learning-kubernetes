@@ -1,0 +1,160 @@
+---
+# DB PERSISTENCE VOLUME
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-learn-nodejs
+  labels:
+    app: mysql
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/lib/data"
+---
+# DB PERSISTENCE VOLUME CLAIM
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-claim-learn-nodejs
+  labels:
+    app: mysql
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+# APP DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-learn-nodejs
+  labels:
+    app: app
+    tier: learn-nodejs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: app
+      tier: learn-nodejs
+  template:
+    metadata:
+      labels:
+        app: app
+        tier: learn-nodejs
+    spec:
+      containers:
+        - name: learn-nodejs
+          image: piinalpin/learn-nodejs
+          env:
+          - name: "PORT"
+            value: "8080"
+          - name: "DB_HOST"
+            value: "db-learn-nodejs-svc"
+          - name: "DB_USERNAME"
+            value: "root"
+          - name: "DB_PASSWORD"
+            value: "p@s5w0rD"
+          - name: "DB_NAME"
+            value: "learn_nodejs"
+          - name: "DB_PORT"
+            value: "3306"
+---
+# DB DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-learn-nodejs
+  labels:
+    app: db
+    tier: learn-nodejs
+spec:
+  selector:
+    matchLabels:
+      app: db
+      tier: learn-nodejs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: db
+        tier: learn-nodejs
+    spec:
+      containers:
+      - image: mysql:latest
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: p@s5w0rD
+        - name: "PORT"
+          value: "3306"
+        volumeMounts:
+        - name: pv-learn-nodejs
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: pv-learn-nodejs
+        persistentVolumeClaim:
+          claimName: pv-claim-learn-nodejs
+---
+# APP SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-learn-nodejs-svc
+  labels:
+    app: app
+    tier: learn-nodejs
+spec:
+  selector:
+    app: app
+    tier: learn-nodejs
+  ports:
+    - name: app-port
+      protocol: TCP
+      port: 8001
+      targetPort: 8080
+  type: LoadBalancer
+---
+# DB SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-learn-nodejs-svc
+  labels:
+    app: db
+    tier: learn-nodejs
+spec:
+  selector:
+    app: db
+    tier: learn-nodejs
+  ports:
+    - name: db-port
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-learn-nodejs-ingress
+spec:
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: app-learn-nodejs-svc
+              port: 
+                number: 8001

@@ -1,0 +1,88 @@
+---
+# DB PERSISTENCE VOLUME
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-learn-nodejs
+  labels:
+    app: mysql
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/lib/data"
+---
+# DB PERSISTENCE VOLUME CLAIM
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-claim-learn-nodejs
+  labels:
+    app: mysql
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+# DB DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-learn-nodejs
+  labels:
+    app: db
+    tier: learn-nodejs
+spec:
+  selector:
+    matchLabels:
+      app: db
+      tier: learn-nodejs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: db
+        tier: learn-nodejs
+    spec:
+      containers:
+      - image: mysql:latest
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: p@s5w0rD
+        - name: "PORT"
+          value: "3306"
+        volumeMounts:
+        - name: pv-learn-nodejs
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: pv-learn-nodejs
+        persistentVolumeClaim:
+          claimName: pv-claim-learn-nodejs
+---
+# DB SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-learn-nodejs-svc
+  labels:
+    app: db
+    tier: learn-nodejs
+spec:
+  selector:
+    app: db
+    tier: learn-nodejs
+  ports:
+    - name: db-port
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: LoadBalancer
