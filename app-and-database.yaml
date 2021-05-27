@@ -151,7 +151,7 @@ spec:
   rules:
     - http:
         paths:
-        - path: /
+        - path: /programming-languages
           pathType: Prefix
           backend:
             service:
