@@ -34,7 +34,7 @@ Install Docker Desktop from official website, please follow this link [Install D
 
 **Enable Kubernetes**
 
-![Enable Kubernetes](/images/enable-k8s.png)
+![Enable Kubernetes](enable-k8s.png)
 
 Kubernetes itself runs in containers. When you deploy a Kubenetes cluster you first install Docker (or another container runtime like [containerd](https://containerd.io)) and then use tools like [kubeadm](https://kubernetes.io/docs/reference/setup-tools/kubeadm/) which starts all the Kubernetes components in containers. Docker Desktop does all that for you.
 
@@ -165,7 +165,7 @@ Running `kubectl proxy` to accessing the dashbooard, then access this link `http
 
 If we get an output
 
-![Kubernetes Dashboard Auth](/images/k8s-dashboard-auth.png)
+![Kubernetes Dashboard Auth](k8s-dashboard-auth.png)
 
 Get token to access dashboard page and paste on authentication page.
 
@@ -173,7 +173,7 @@ Get token to access dashboard page and paste on authentication page.
 kubectl get secret -n kubernetes-dashboard $(kubectl get serviceaccount default -n kubernetes-dashboard -o jsonpath="{.secrets[0].name}") -o jsonpath="{.data.token}" | base64 --decode
 ```
 
-![Kubernetes Dashboard](/images/k8s-dashboard.png)
+![Kubernetes Dashboard](k8s-dashboard.png)
 
 Detail information dashboard please follow [Kubernetes.io](https://kubernetes.io/id/docs/tasks/access-application-cluster/web-ui-dashboard/)
 
